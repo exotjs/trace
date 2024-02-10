@@ -1,0 +1,54 @@
+{
+  "name": "@exotjs/trace",
+  "version": "0.1.0",
+  "description": "A small, performant library simplifying application tracing.",
+  "author": "Daniel Regeci",
+  "license": "MIT",
+  "keywords": [
+    "exot",
+    "inspector",
+    "trace",
+    "tracing",
+    "telemetry",
+    "otel",
+    "opentelemetry"
+  ],
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "type": "module",
+  "scripts": {
+    "build": "rimraf dist && tsc -p tsconfig.build.json",
+    "eslint": "eslint ./lib/**/*",
+    "format": "prettier --write './(lib|tests)/**/*'",
+    "test": "vitest"
+  },
+  "files": [
+    "dist"
+  ],
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "typesVersions": {
+    "*": {
+      "types": [
+        "./dist/types"
+      ]
+    }
+  },
+  "devDependencies": {
+    "@types/node": "^20.9.0",
+    "@typescript-eslint/eslint-plugin": "^6.21.0",
+    "@typescript-eslint/parser": "^6.21.0",
+    "eslint": "^8.56.0",
+    "prettier": "^3.2.5",
+    "rimraf": "^5.0.5",
+    "ts-node": "^10.9.1",
+    "tsx": "^4.0.0",
+    "typescript": "^5.2.2",
+    "vitest": "^1.0.1"
+  }
+}
