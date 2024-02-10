@@ -1,5 +1,6 @@
 import { AsyncLocalStorage } from 'node:async_hooks';
 import { EventEmitter } from 'node:events';
+import { randomUUID } from 'node:crypto';
 import type {
   Context,
   SpanOptions,
@@ -18,10 +19,6 @@ export class Tracer extends EventEmitter {
   };
 
   active: boolean = true;
-
-  constructor() {
-    super();
-  }
 
   get trace(): (typeof this)['traceFn'] {
     return this.traceFn.bind(this);
@@ -57,6 +54,7 @@ export class Tracer extends EventEmitter {
       name,
       parent,
       start: this.#now(),
+      uuid: !parent ? randomUUID() : void 0,
       toJSON() {
         return {
           ...this,

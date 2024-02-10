@@ -13,21 +13,24 @@ const { trace } = tracer;
 tracer.on('endSpan', (span) => {
   if (!span.parent) {
     // Print only if it's a span without a parent
-    console.log(JSON.stringify(span, null, '  '))
+    console.log(JSON.stringify(span, null, '  '));
   }
 });
+
+async function getUser(id: string) {
+  // This trace will be automatically grouped with router:getUser
+  return trace('prisma:getUser', () => prisma.users.findUnique({
+    where: {
+      id,
+    },
+  }));
+}
 
 app.get('/user/:id', (req) => {
   // Use the `trace()` function in your code:
   trace('router:getUser', async () => {
-    // Nesting is supported and works without passing around context
-    const user = await trace('prisma:getUser', () => prisma.users.findUnique({
-      where: {
-        id: req.params.id,
-      },
-    }));
     return {
-      user,
+      user: await getUser(req.params.id),
     };
   });
 });
@@ -51,7 +54,8 @@ After execution, the console will print the following traces:
   "duration": 6.533447265625,
   "events": [],
   "name": "router:getUser",
-  "start": 1707548525703.1785
+  "start": 1707548525703.1785,
+  "uuid": "12652d90-c01e-48c7-ae2a-7984033b515e"
 }
 ```
 

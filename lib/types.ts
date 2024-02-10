@@ -19,6 +19,7 @@ export interface Span {
   name: string;
   parent?: Span;
   start: number;
+  uuid?: string;
   toJSON: () => unknown;
 }
 
