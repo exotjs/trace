@@ -1,5 +1,9 @@
 {
   "type": "module",
+  "scripts": {
+    "bench:trace": "npx tsx trace.ts",
+    "bench:span": "npx tsx span.ts"
+  },
   "devDependencies": {
     "tinybench": "2.6.0"
   }

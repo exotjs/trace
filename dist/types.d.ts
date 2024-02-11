@@ -1,14 +1,14 @@
-export interface Context {
-    activeSpan?: Span;
+export interface TraceContext {
+    activeSpan?: TraceSpan;
     addAttribute: (name: string, value: unknown) => void;
     addEvent: (text: string, attributes?: Attributes) => void;
     end: () => void;
     name: string;
-    rootSpan?: Span;
+    rootSpan?: TraceSpan;
 }
-export interface Span {
-    attributes: Record<string, unknown>;
-    children: Span[];
+export interface TraceSpan {
+    attributes: Attributes;
+    children: TraceSpan[];
     duration: number;
     events: {
         attributes?: Attributes;
@@ -16,14 +16,17 @@ export interface Span {
         text: string;
     }[];
     name: string;
-    parent?: Span;
+    parent?: TraceSpan;
     start: number;
     uuid?: string;
-    toJSON: () => unknown;
+    toJSON?: () => unknown;
 }
 export interface SpanOptions {
     attributes?: Attributes;
-    onEnd?: (ctx: Context) => void;
+    parent?: TraceSpan;
+}
+export interface TraceOptions extends SpanOptions {
+    onEnd?: (ctx: TraceContext) => void;
 }
 export type Attributes = Record<string, unknown>;
-export type TraceFunction<T = unknown> = (name: string, fn: (ctx: Context) => Promise<T> | T, options?: SpanOptions) => Promise<T> | T;
+export type TraceFunction<T = unknown> = (name: string, fn: (ctx: TraceContext) => Promise<T> | T, options?: SpanOptions) => Promise<T> | T;

@@ -27,5 +27,4 @@ await benchmark('trace()', (bench) => {
         tracer.active = true;
       },
     })
-})
-
+});

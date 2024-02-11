@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { Tracer } from '../lib/index.js';
-import type { Context } from '../lib/types.js';
+import type { TraceContext } from '../lib/types.js';
 
 async function delay(d: number) {
   await new Promise((resolve) => setTimeout(resolve, d));
@@ -54,7 +54,7 @@ describe('Tracer', () => {
     });
 
     it('should not share the same context', () => {
-      let ctx1: Context;
+      let ctx1: TraceContext;
       tracer.trace('test1', (ctx) => {
         ctx1 = ctx;
       });
@@ -104,7 +104,7 @@ describe('Tracer', () => {
     });
 
     it('should create spans', () => {
-      const onEnd = vi.fn((ctx: Context) => {
+      const onEnd = vi.fn((ctx: TraceContext) => {
         expect(ctx.rootSpan?.name).toEqual('test1');
         expect(ctx.rootSpan?.duration).toBeGreaterThan(0);
         expect(ctx.rootSpan?.children.length).toEqual(1);
@@ -127,7 +127,7 @@ describe('Tracer', () => {
 
     describe('Attributes', () => {
       it('should add attributes via options', () => {
-        const onEnd = vi.fn((ctx: Context) => {
+        const onEnd = vi.fn((ctx: TraceContext) => {
           expect(ctx.rootSpan?.attributes).toEqual({
             attr1: 'a',
             attr2: 'b',
@@ -150,7 +150,7 @@ describe('Tracer', () => {
       });
 
       it('should add attributes via context', () => {
-        const onEnd = vi.fn((ctx: Context) => {
+        const onEnd = vi.fn((ctx: TraceContext) => {
           expect(ctx.rootSpan?.attributes).toEqual({
             attr1: 'a',
           });
@@ -170,7 +170,7 @@ describe('Tracer', () => {
 
     describe('Events', () => {
       it('should add an event', () => {
-        const onEnd = vi.fn((ctx: Context) => {
+        const onEnd = vi.fn((ctx: TraceContext) => {
           expect(ctx.rootSpan?.events).toEqual([
             {
               time: expect.any(Number),
@@ -191,7 +191,7 @@ describe('Tracer', () => {
       });
 
       it('should add an event with attributes', () => {
-        const onEnd = vi.fn((ctx: Context) => {
+        const onEnd = vi.fn((ctx: TraceContext) => {
           expect(ctx.rootSpan?.events).toEqual([
             {
               attributes: {
@@ -215,6 +215,49 @@ describe('Tracer', () => {
         );
         expect(onEnd).toHaveBeenCalled();
       });
+    });
+  });
+
+  describe('.startSpan()', () => {
+    it('should start a new span', () => {
+      const span = tracer.startSpan('test');
+      expect(span.name).toEqual('test');
+      expect(span.duration).toEqual(0);
+      expect(span.uuid).toBeDefined();
+    });
+
+    it('should start a new span with a parent', () => {
+      const span1 = tracer.startSpan('test1');
+      const span2 = tracer.startSpan('test2', span1);
+      expect(span1.name).toEqual('test1');
+      expect(span2.name).toEqual('test2');
+      expect(span2.parent === span1).toBeTruthy();
+    });
+  });
+
+  describe('.endSpan()', () => {
+    it('should end span', () => {
+      const span = tracer.startSpan('test');
+      tracer.endSpan(span);
+      expect(span.name).toEqual('test');
+      expect(span.duration).toBeGreaterThan(0);
+    });
+
+    it('should return parent span', () => {
+      const span1 = tracer.startSpan('test1');
+      const span2 = tracer.startSpan('test2', span1);
+      const parent = tracer.endSpan(span2);
+      expect(parent === span1).toBeTruthy();
+    });
+    
+    it('should end nested spans', () => {
+      const span1 = tracer.startSpan('test1');
+      const span2 = tracer.startSpan('test2', span1);
+      const span3 = tracer.startSpan('test3', span2);
+      tracer.endSpan(span1);
+      expect(span1.duration).toBeGreaterThan(0);
+      expect(span2.duration).toBeGreaterThan(0);
+      expect(span3.duration).toBeGreaterThan(0);
     });
   });
 

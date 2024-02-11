@@ -6,7 +6,8 @@ export async function benchmark(name: string, initFn: (bench: Bench) => void, du
   const bench = new Bench({
     time: duration,
     throws: true,
-    warmupTime: 1000,
+    warmupTime: 2000,
+    warmupIterations: 100,
   });
   initFn(bench);
   await bench.run();

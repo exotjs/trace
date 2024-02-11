@@ -70,19 +70,36 @@ To store traces in OpenTelemetry or a database, use the `createSpan` and `endSpa
 ## Performance
 
 ```
-- baseline (no tracing)...................  6,402,783 ops/s ±1.06%
-- tracing inactive........................  6,392,829 ops/s ±0.74%
-- tracing active..........................  1,414,287 ops/s ±0.69%
+trace()
+
+- baseline (no tracing)...................  6,365,908 ops/s ±1.20%
+- tracing inactive........................  6,426,187 ops/s ±0.72%
+- tracing active..........................  1,037,015 ops/s ±0.95%
 ```
 
-Using the `trace()` function in your code with tracing enabled incurs a significant performance penalty (approximately ~80% according to the benchmark). However, when tracing is deactivated using the `active` property, the penalty is negligible. Thus, it's acceptable to keep `trace()` functions in your production code and enable tracing only when needed.
+```
+startSpan() + endSpan()
+
+- baseline (no tracing)...................  6,400,684 ops/s ±1.07%
+- tracing inactive........................  6,620,705 ops/s ±1.54%
+- tracing active..........................  1,396,103 ops/s ±0.81%
+```
+
+Using the `trace()` function in your code with tracing enabled incurs a significant performance penalty (approximately ~85% according to the benchmark).
+It's important to note, that this 85% drop compares to the raw function call of an empty function (which doesn't do anything) and it does not mean that you'll encounter the same drop relative to the real-world code. The performance of 1M ops/s is considered very good and it means you can __trace at least 1 million function calls a second__.
+
+When tracing is deactivated using the `active` property, the penalty is negligible. Thus, it's acceptable to keep `trace()` functions in your production code and enable tracing only when needed.
+
+See [/benchmarks](/benchmarks) folder.
 
 ## Compatibility
+
+This library is meant to be used only server-side and is compatible with the latest versions of Node.js and Bun.
 
 - Node.js 16+
 - Bun 1+
 
-## Using `trace(name, fn, options?)`
+## Using `trace()`
 
 The `trace()` function executes the `fn` function and returns its return value. The `fn` function receives one argument, the [context](#context).
 
@@ -90,9 +107,36 @@ Parameters:
 
 - `name: string` (required) Descriptive trace name.
 - `fn: (ctx: Context) => any` (required) The function to be traced. Can be synchronous or asynchronous.
-- `options?: SpanOptions` See below.
+- `options?: SpanOptions` [See below](#spanoptions).
 
 Returns the return value of the `fn` function.
+
+## Using `startSpan()` and `endSpan()`
+
+An alternative to the `trace()` function is to use functions `startSpan()` and `endSpan()`:
+
+```ts
+const span = tracer.startSpan('myspan');
+// Your code here...
+tracer.endSpan(span);
+
+console.log('Duration:', span.duration);
+```
+
+These functions do not automatically carry context; to nest spans together, you have to provide the parent span using the `options` parameter.
+
+### `startSpan(name, options?)`
+
+Parameters:
+
+- `name: string` (required) Descriptive trace name.
+- `options?: SpanOptions` [See below](#spanoptions).
+
+### `endSpan(span)`
+
+Parameters:
+
+- `span: TraceSpan` (required) Span to end.
 
 ## Context
 
@@ -127,6 +171,46 @@ Adds a custom event with optional attributes to the current span.
 
 Terminates the current span.
 
+## Span
+
+The `TraceSpan` has the following structure:
+
+```ts
+interface TraceSpan {
+  attributes: Record<string, unknown>;
+  children: TraceSpan[];
+  duration: number;
+  events: {
+    attributes?: Record<string, unknown>;
+    time: number;
+    text: string;
+  }[];
+  name: string;
+  parent?: TraceSpan;
+  start: number;
+  uuid?: string;
+}
+```
+
+The `uuid` property is set only for the "root spans" (which don't a parent span) and you can use these UUIDs (v4) as "trace ID".
+
+## SpanOptions
+
+```ts
+interface SpanOptions {
+  attributes?: Attributes;
+  parent?: TraceSpan;
+}
+```
+
+The `trace()` function also accepts `onEnd` function, which gets called once the snap has ended:
+
+```ts
+interface TraceOptions extends SpanOptions {
+  onEnd?: (ctx: TraceContext) => void;
+}
+```
+
 ## Events
 
 ```ts
@@ -145,7 +229,7 @@ Triggered when a new attribute has been assigned to a span.
 
 Arguments:
 
-- `span: Span` The span instance.
+- `span: TraceSpan` The span instance.
 - `name: string` The name of the attribute.
 - `value: unknown` The value of the attribute.
 
@@ -155,7 +239,7 @@ Triggered when a new event has been added to a span.
 
 Arguments:
 
-- `span: Span` The span instance.
+- `span: TraceSpan` The span instance.
 - `text: string` The text of the event.
 - `attributes: Record<string, unknown>` Optional attributes of the event.
 
@@ -165,7 +249,7 @@ Triggered when a new span has started.
 
 Arguments:
 
-- `span: Span` The span instance.
+- `span: TraceSpan` The span instance.
 
 ### `endSpan`
 
@@ -173,7 +257,7 @@ Triggered when a span has ended.
 
 Arguments:
 
-- `span: Span` The span instance.
+- `span: TraceSpan` The span instance.
 
 ## License
 

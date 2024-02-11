@@ -1,6 +1,6 @@
 {
   "name": "@exotjs/trace",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "A small, performant library simplifying application tracing.",
   "author": "Daniel Regeci",
   "license": "MIT",
@@ -30,6 +30,10 @@
     ".": {
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js"
+    },
+    "./types": {
+      "types": "./dist/types.d.ts",
+      "import": "./dist/types.js"
     }
   },
   "typesVersions": {
