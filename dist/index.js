@@ -22,6 +22,12 @@ export class Tracer extends EventEmitter {
     };
     active = true;
     uuidGenerator = randomUUID;
+    get addAttribute() {
+        return this.#addAttribute.bind(this);
+    }
+    get addEvent() {
+        return this.#addEvent.bind(this);
+    }
     get endSpan() {
         return this.#endSpan.bind(this);
     }

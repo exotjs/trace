@@ -86,7 +86,7 @@ startSpan() + endSpan()
 ```
 
 Using the `trace()` function in your code with tracing enabled incurs a significant performance penalty (approximately ~85% according to the benchmark).
-It's important to note, that this 85% drop compares to the raw function call of an empty function (which doesn't do anything) and it does not mean that you'll encounter the same drop relative to the real-world code. The performance of 1M ops/s is considered very good and it means you can __trace at least 1 million function calls a second__.
+It's important to note, that this 85% drop compares to the raw function call of an empty function (which doesn't do anything) and it doesn't mean that you'll encounter the same drop relative to the real-world code. The performance of 1M ops/s is considered very good and it means you can __trace at least 1 million function calls a second__.
 
 When tracing is deactivated using the `active` property, the penalty is negligible. Thus, it's acceptable to keep `trace()` functions in your production code and enable tracing only when needed.
 
