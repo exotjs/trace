@@ -4,7 +4,7 @@ export interface TraceContext {
   addEvent: (text: string, attributes?: Attributes) => void;
   end: () => void;
   name: string;
-  rootSpan?: TraceSpan;
+  rootSpan: TraceSpan;
 }
 
 export interface TraceSpan {

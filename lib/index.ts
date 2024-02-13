@@ -17,7 +17,8 @@ export class Tracer extends EventEmitter {
     addEvent: () => {},
     end: () => {},
     name: '',
-  };
+    rootSpan: void 0,
+  } as any;
 
   #mockSpan: TraceSpan = {
     attributes: {},
@@ -95,7 +96,7 @@ export class Tracer extends EventEmitter {
         }
       },
       name,
-    };
+    } as TraceContext;
     return ctx;
   }
 

@@ -8,6 +8,7 @@ export class Tracer extends EventEmitter {
         addEvent: () => { },
         end: () => { },
         name: '',
+        rootSpan: void 0,
     };
     #mockSpan = {
         attributes: {},
