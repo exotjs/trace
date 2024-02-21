@@ -2,6 +2,20 @@
 
 Exot Trace is a small, performant library simplifying application tracing. Utilizing [AsyncLocalStorage](https://nodejs.org/api/async_context.html#class-asynclocalstorage), this library simplifies tracing function calls by integrating the `trace()` function directly into your codebase without the need to manage context manually.
 
+[![ci](https://github.com/exotjs/trace/actions/workflows/ci.yml/badge.svg)](https://github.com/exotjs/trace/actions/workflows/ci.yml)
+
+## Install
+
+```sh
+npm install @exotjs/trace
+```
+
+## Deno
+
+```ts
+import { Tracer } from 'https://deno.land/x/exot_trace/mod.ts'
+```
+
 ## Usage
 
 ```ts
