@@ -125,6 +125,24 @@ describe('Tracer', () => {
       expect(onEnd).toHaveBeenCalled();
     });
 
+    describe('Status', () => {
+      it('should set status via context', () => {
+        const onEnd = vi.fn((ctx: TraceContext) => {
+          expect(ctx.rootSpan?.status).toEqual('ok');
+        });
+        tracer.trace(
+          'test1',
+          ({ setStatus }) => {
+            setStatus('ok');
+          },
+          {
+            onEnd,
+          }
+        );
+        expect(onEnd).toHaveBeenCalled();
+      });
+    });
+
     describe('Attributes', () => {
       it('should add attributes via options', () => {
         const onEnd = vi.fn((ctx: TraceContext) => {
@@ -218,6 +236,25 @@ describe('Tracer', () => {
     });
   });
 
+  describe('.setStatus()', () => {
+    it('should set span status', () => {
+      const span = tracer.startSpan('test');
+      expect(span.status).toBeUndefined();
+      tracer.setStatus(span, 'ok');
+      expect(span.status).toEqual('ok');
+    });
+
+    it('should set span status with attributes', () => {
+      const span = tracer.startSpan('test');
+      expect(span.status).toBeUndefined();
+      tracer.setStatus(span, 'ok', {
+        testattr: '123',
+      });
+      expect(span.status).toEqual('ok');
+      expect(span.attributes.testattr).toEqual('123');
+    });
+  });
+
   describe('.startSpan()', () => {
     it('should start a new span', () => {
       const span = tracer.startSpan('test');
@@ -249,7 +286,7 @@ describe('Tracer', () => {
       const parent = tracer.endSpan(span2);
       expect(parent === span1).toBeTruthy();
     });
-    
+
     it('should end nested spans', () => {
       const span1 = tracer.startSpan('test1');
       const span2 = tracer.startSpan('test2', span1);

@@ -8,7 +8,7 @@ import type {
   TraceSpan,
   TraceOptions,
   TraceSpanStatus,
-} from './types.js';
+} from './types.ts';
 
 export class Tracer extends EventEmitter {
   #als = new AsyncLocalStorage<TraceContext>();

@@ -8,6 +8,7 @@ export class Tracer extends EventEmitter {
         addEvent: () => { },
         end: () => { },
         name: '',
+        // @ts-expect-error root span not needed in the mock context
         rootSpan: void 0,
     };
     #mockSpan = {
@@ -19,7 +20,7 @@ export class Tracer extends EventEmitter {
         start: 0,
         toJSON() {
             return this;
-        }
+        },
     };
     active = true;
     uuidGenerator = randomUUID;
@@ -31,6 +32,9 @@ export class Tracer extends EventEmitter {
     }
     get endSpan() {
         return this.#endSpan.bind(this);
+    }
+    get setStatus() {
+        return this.#setStatus.bind(this);
     }
     get startSpan() {
         return this.#startSpan.bind(this);
@@ -73,6 +77,9 @@ export class Tracer extends EventEmitter {
                 }
             },
             name,
+            setStatus: (status, attributes) => ctx.activeSpan
+                ? this.#setStatus(ctx.activeSpan, status, attributes)
+                : void 0,
         };
         return ctx;
     }
@@ -123,6 +130,15 @@ export class Tracer extends EventEmitter {
             return span.parent;
         }
     }
+    #setStatus(span, status, attributes) {
+        span.status = status;
+        if (attributes) {
+            for (const key in attributes) {
+                this.#addAttribute(span, key, attributes[key]);
+            }
+        }
+        this.emit('setStatus', span, status, attributes);
+    }
     #startSpan(name, parent) {
         if (!this.active) {
             return this.#mockSpan;
@@ -141,7 +157,7 @@ export class Tracer extends EventEmitter {
                     ...this,
                     parent: void 0,
                 };
-            }
+            },
         };
         if (parent) {
             parent.children.push(span);
