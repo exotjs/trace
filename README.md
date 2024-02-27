@@ -90,28 +90,45 @@ Nested `trace()` calls work out-of-the-box without the need to pass around any c
 
 To store traces in OpenTelemetry or a database, use the `createSpan` and `endSpan` [events](#events).
 
+## Active vs. Inactive Tracing
+
+To gain some extra performance when tracing isn't actively being monitored, the `Tracer` exposes the `active` property. When set to `false`, it disables some features while keeping the `trace()`, `startSpan()`, and `endSpan()` functions working as normal.
+
+This allows you to keep `trace()` functions in your production codebase and only activate the tracer when needed.
+
+This table shows which functions and features are affected:
+
+| Feature       | Active | Inactive |
+|---------------|--------|----------|
+| trace()       | Yes    | Yes      |
+| startSpan()   | Yes    | Yes      |
+| endSpan()     | Yes    | Yes      |
+| addAttribute()| Yes    | No       |
+| addEvent()    | Yes    | No       |
+| setStatus()   | Yes    | No       |
+| Duration      | Yes    | Yes      |
+| Parent detection | Yes | No       |
+
 ## Performance
 
 ```
 trace()
 
-- baseline (no tracing)...................  6,365,908 ops/s ±1.20%
-- tracing inactive........................  6,426,187 ops/s ±0.72%
-- tracing active..........................  1,037,015 ops/s ±0.95%
+- baseline (no tracing)...................  6,906,999 ops/s ±1.05%
+- tracing inactive........................  2,906,365 ops/s ±0.63%
+- tracing active..........................  1,020,008 ops/s ±0.90%
 ```
 
 ```
 startSpan() + endSpan()
 
-- baseline (no tracing)...................  6,400,684 ops/s ±1.07%
-- tracing inactive........................  6,620,705 ops/s ±1.54%
-- tracing active..........................  1,396,103 ops/s ±0.81%
+- baseline (no tracing)...................  6,933,248 ops/s ±1.06%
+- tracing inactive........................  3,663,070 ops/s ±0.52%
+- tracing active..........................  1,756,365 ops/s ±0.68%
 ```
 
-Using the `trace()` function in your code with tracing enabled incurs a significant performance penalty (approximately ~85% according to the benchmark).
-It's important to note, that this 85% drop compares to the raw function call of an empty function (which doesn't do anything) and it doesn't mean that you'll encounter the same drop relative to the real-world code. The performance of 1M ops/s is considered very good and it means you can __trace at least 1 million function calls a second__.
+The benchmark above shows the number of executions per second of a noop function in three scenarios - (1) no tracing at all, (2) with tracing implemented but disabled, and (3) tracing implemented and enabled. Tracing incurs a significant performance penalty, but even with active tracing, you should reach over 1M ops/sec.
 
-When tracing is deactivated using the `active` property, the penalty is negligible. Thus, it's acceptable to keep `trace()` functions in your production code and enable tracing only when needed.
 
 See [/benchmarks](/benchmarks) folder.
 
@@ -250,6 +267,9 @@ interface TraceOptions extends SpanOptions {
 ```
 
 ## Events
+
+> [!IMPORTANT]  
+> Events are emitted only when the tracer is [`active`](#active-vs-inactive-tracing).
 
 ```ts
 import { Tracer } from '@exotjs/trace';

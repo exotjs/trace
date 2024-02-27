@@ -13,27 +13,6 @@ import type {
 export class Tracer extends EventEmitter {
   #als = new AsyncLocalStorage<TraceContext>();
 
-  #mockTraceContext: TraceContext = {
-    addAttribute: () => {},
-    addEvent: () => {},
-    end: () => {},
-    name: '',
-    // @ts-expect-error root span not needed in the mock context
-    rootSpan: void 0,
-  };
-
-  #mockSpan: TraceSpan = {
-    attributes: {},
-    children: [],
-    duration: 0,
-    events: [],
-    name: '',
-    start: 0,
-    toJSON() {
-      return this;
-    },
-  };
-
   active: boolean = true;
 
   uuidGenerator: () => string = randomUUID;
@@ -73,17 +52,21 @@ export class Tracer extends EventEmitter {
   }
 
   #addAttribute(span: TraceSpan, name: string, value: unknown) {
-    span.attributes[name] = value;
-    this.emit('addAttribute', span, name, value);
+    if (this.active) {
+      span.attributes[name] = value;
+      this.emit('addAttribute', span, name, value);
+    }
   }
 
   #addEvent(span: TraceSpan, text: string, attributes?: Attributes) {
-    span.events.push({
-      attributes,
-      text,
-      time: this.#now(),
-    });
-    this.emit('addEvent', span, text, attributes);
+    if (this.active) {
+      span.events.push({
+        attributes,
+        text,
+        time: this.#now(),
+      });
+      this.emit('addEvent', span, text, attributes);
+    }
   }
 
   #createTraceContext(name: string) {
@@ -151,9 +134,6 @@ export class Tracer extends EventEmitter {
   }
 
   #endSpan(span: TraceSpan) {
-    if (!this.active) {
-      return void 0;
-    }
     span.duration = this.#now() - span.start;
     if (span.children.length) {
       for (const child of span.children) {
@@ -162,7 +142,9 @@ export class Tracer extends EventEmitter {
         }
       }
     }
-    this.emit('endSpan', span);
+    if (this.active) {
+      this.emit('endSpan', span);
+    }
     if (span.parent) {
       return span.parent;
     }
@@ -173,19 +155,18 @@ export class Tracer extends EventEmitter {
     status: TraceSpanStatus,
     attributes?: Attributes
   ) {
-    span.status = status;
-    if (attributes) {
-      for (const key in attributes) {
-        this.#addAttribute(span, key, attributes[key]);
+    if (this.active) {
+      span.status = status;
+      if (attributes) {
+        for (const key in attributes) {
+          this.#addAttribute(span, key, attributes[key]);
+        }
       }
+      this.emit('setStatus', span, status, attributes);
     }
-    this.emit('setStatus', span, status, attributes);
   }
 
   #startSpan(name: string, parent?: TraceSpan) {
-    if (!this.active) {
-      return this.#mockSpan;
-    }
     const span: TraceSpan = {
       attributes: {},
       children: [],
@@ -194,7 +175,7 @@ export class Tracer extends EventEmitter {
       name,
       parent,
       start: this.#now(),
-      uuid: !parent ? this.uuidGenerator() : void 0,
+      uuid: this.active && !parent ? this.uuidGenerator() : void 0,
       toJSON() {
         return {
           ...this,
@@ -205,7 +186,9 @@ export class Tracer extends EventEmitter {
     if (parent) {
       parent.children.push(span);
     }
-    this.emit('startSpan', span);
+    if (this.active) {
+      this.emit('startSpan', span);
+    }
     return span;
   }
 
@@ -214,10 +197,9 @@ export class Tracer extends EventEmitter {
     fn: (ctx: TraceContext) => Promise<T> | T,
     options: TraceOptions = {}
   ) {
-    if (!this.active) {
-      return fn(this.#mockTraceContext);
-    }
-    let ctx = this.#als.getStore();
+    let ctx = this.active
+      ? this.#als.getStore()
+      : this.#createTraceContext(name);
     if (!ctx) {
       ctx = this.#createTraceContext(name);
       return this.#als.run(ctx, () => {
