@@ -74,7 +74,7 @@ export class Tracer extends EventEmitter {
             ctx.rootSpan = span;
         }
         let result = undefined;
-        if (options.attributes) {
+        if (this.active && options.attributes) {
             for (const key in options.attributes) {
                 this.#addAttribute(span, key, options.attributes[key]);
             }

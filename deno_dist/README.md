@@ -31,7 +31,7 @@ tracer.on('endSpan', (span) => {
   }
 });
 
-async function getUser(id: string) {
+async function getUser(id) {
   // This trace will be automatically grouped with router:getUser
   return trace('prisma:getUser', () => prisma.users.findUnique({
     where: {
@@ -128,6 +128,8 @@ startSpan() + endSpan()
 ```
 
 The benchmark above shows the number of executions per second of a noop function in three scenarios - (1) no tracing at all, (2) with tracing implemented but disabled, and (3) tracing implemented and enabled. Tracing incurs a significant performance penalty, but even with active tracing, you should reach over 1M ops/sec.
+
+For benchmarks run with a HTTP server, refer to the [Hono integration benchmarks](https://github.com/exotjs/hono?tab=readme-ov-file#performance).
 
 
 See [/benchmarks](/benchmarks) folder.

@@ -103,6 +103,14 @@ describe('Tracer', () => {
       expect(fn).toHaveBeenCalled();
     });
 
+    it('should execute onEnd function', async () => {
+      const onEnd = vi.fn();
+      tracer.trace('test', () => {}, {
+        onEnd,
+      });
+      expect(onEnd).toHaveBeenCalled();
+    });
+
     it('should create spans', () => {
       const onEnd = vi.fn((ctx: TraceContext) => {
         expect(ctx.rootSpan?.name).toEqual('test1');
@@ -123,6 +131,20 @@ describe('Tracer', () => {
         }
       );
       expect(onEnd).toHaveBeenCalled();
+    });
+
+    describe('Deactivated', () => {
+      beforeEach(() => {
+        tracer.active = false;
+      });
+
+      it('should execute onEnd function', async () => {
+        const onEnd = vi.fn();
+        tracer.trace('test', () => {}, {
+          onEnd,
+        });
+        expect(onEnd).toHaveBeenCalled();
+      });
     });
 
     describe('Status', () => {
